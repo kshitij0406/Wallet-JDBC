@@ -1,6 +1,9 @@
 package database;
 
 import java.sql.*;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.Scanner;
 
 public class Server {
@@ -56,11 +59,11 @@ public class Server {
         }
     }
 
-    public static void viewBalance(Integer MobileNumber){
+    public static void viewBalance(Integer MobileNumber) {
         String qry = "Select * from Person where mobile_number = ? ";
         try {
             theStatement = dbCon.prepareStatement(qry);
-            theStatement.setInt(1,MobileNumber);
+            theStatement.setInt(1, MobileNumber);
             ResultSet rs = theStatement.executeQuery();
             while (rs.next()) {
                 System.out.println("Mobile Number: " + rs.getInt("Mobile_Number") + " || Name: "
@@ -73,6 +76,52 @@ public class Server {
         }
 
     }
+    public static void transactionHistory(Integer MobileNumber) {
+        String qry = "Select * from Transactions where mobile_number = ? ";
+        System.out.println("Inside Transaction History");
+        try {
+            theStatement = dbCon.prepareStatement(qry);
+            theStatement.setInt(1, MobileNumber);
+            ResultSet rs = theStatement.executeQuery();
+            while (rs.next()) {
+                System.out.println("Mobile Number: " + rs.getInt("Mobile_Number") + " || Date: "
+                        + rs.getDate("Date_Time")  + " || Details: "
+                        + rs.getString("Details") + " || Balance: " + rs.getInt("Balance"));
+            }
+
+
+        } catch (SQLException e) {
+            System.out.println("Could not view balance " + e);
+        }
+
+    }
+    public static void addTransaction(Integer mobileNumber, String details, Integer balance ) {
+        System.out.println("Inside addTransaction");
+
+        String qry = "Insert into transactions ( Mobile_Number, Details, Balance) values(?, ?, ?) ";
+        try {
+            theStatement = dbCon.prepareStatement(qry);
+            System.out.println("Inside addTransaction");
+
+            theStatement.setString(2,details);
+            theStatement.setInt(3,balance);
+            theStatement.setInt(1,mobileNumber);
+            System.out.println("Inside addTransaction");
+
+            if (theStatement.executeUpdate() > 0) {
+                System.out.println("Transaction Added");
+            }
+            else{
+                System.out.println("Could not add transaction");
+            }
+
+        } catch (SQLException e) {
+            System.out.println("Wrong query" + e);
+        }
+
+    }
+
+
 
     public static Boolean verifyUser(Integer MobileNumber) {
         String qry = "Select * From Person where mobile_number = ?";
@@ -89,16 +138,18 @@ public class Server {
         return false;
     }
 
-    public static void addMoney(Integer MobileNumber, Integer amount) {
+    public static void addMoney(Integer mobileNumber, Integer amount) {
         String qry = "Update Person Set Balance = Balance + ? where mobile_number = ? ";
 
         try {
             theStatement = dbCon.prepareStatement(qry);
             theStatement.setInt(1, amount);
-            theStatement.setInt(2, MobileNumber);
+            theStatement.setInt(2, mobileNumber);
 
             if (theStatement.executeUpdate() > 0) {
                 System.out.println("Balance Updated ");
+                Integer balance = Server.checkBalance(mobileNumber);
+                Server.addTransaction(mobileNumber,"Money Added to your account",balance);
             }
 
         } catch (SQLException e) {
@@ -106,44 +157,47 @@ public class Server {
         }
     }
 
-    public static void withdrawMoney(Integer MobileNumber, Integer amount) {
-        String qry = "Select Balance from Person where Mobile_Number = ? ";
-        int balance = 0;
-        try {
-            theStatement = dbCon.prepareStatement(qry);
-            theStatement.setInt(1, MobileNumber);
-
-            ResultSet rs = theStatement.executeQuery();
-            if(rs.next()){
-                balance = rs.getInt("Balance");
-
-            }
-            balance = rs.getInt("Balance");
-        } catch (SQLException e) {
-            System.out.println("Wrong query for balance check" + e);
-        }
-
-        if (balance >= amount){
-            qry = "Update Person Set Balance = Balance - ? where mobile_number = ?";
+    public static void withdrawMoney(Integer mobileNumber, Integer amount) {
+        Integer balance = Server.checkBalance(mobileNumber);
+        if (balance >= amount) {
+            String qry = "Update Person Set Balance = Balance - ? where mobile_number = ?";
 
             try {
                 theStatement = dbCon.prepareStatement(qry);
                 theStatement.setInt(1, amount);
-                theStatement.setInt(2, MobileNumber);
+                theStatement.setInt(2, mobileNumber);
 
                 if (theStatement.executeUpdate() > 0) {
                     System.out.println("Balance Updated ");
+                    Server.addTransaction(mobileNumber,"Money Withdrawn from your account",balance-amount);
                 }
 
             } catch (SQLException e) {
                 System.out.println("Wrong Query" + e);
             }
-        }
-        else{
+        } else {
             System.out.println("Balance is less than " + amount);
         }
 
     }
+
+    private static Integer checkBalance(Integer mobileNumber) {
+        String qry = "Select Balance from Person where Mobile_Number = ? ";
+        Integer balance= null;
+        try {
+            theStatement = dbCon.prepareStatement(qry);
+            theStatement.setInt(1, mobileNumber);
+
+            ResultSet rs = theStatement.executeQuery();
+            if (rs.next()) {
+                balance = rs.getInt("Balance");
+            }
+        } catch (SQLException e) {
+            System.out.println("Wrong query for balance check" + e);
+        }
+        return balance;
+    }
+
     public static void changeName(Integer MobileNumber, String name) {
         String qry = "Update Person Set name = ? where mobile_number = ?";
 

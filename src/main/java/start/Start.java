@@ -33,7 +33,8 @@ public class Start {
 
 
                 while (true) {
-                    System.out.println(" 1. Add Money to Wallet \n 2. Withdraw Money from Wallet \n 3. View Balance \n 4. Change Name \n 5. LOGOUT \n");
+                    System.out.println(" 1. Add Money to Wallet \n 2. Withdraw Money from Wallet \n " +
+                            "3. View Balance \n 4. Change Name \n 5. Transaction History \n 6. LOGOUT");
                     option = scan.nextInt();
                     if (option == 1) {
                         System.out.println("Enter the amount you want to add.");
@@ -51,9 +52,12 @@ public class Start {
                         name = scan.nextLine();
                         p.changeName(name);
                     } else if (option == 5) {
+                        p.transactionHistory();
+
+                    } else if (option == 6) {
 
                         break;
-                    } else {
+                    }else {
                         System.out.println("Choose from above options");
                     }
                 }

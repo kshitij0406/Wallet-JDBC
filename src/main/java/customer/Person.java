@@ -20,6 +20,9 @@ public class Person {
     public void viewBalance() {
         Server.viewBalance(this.mobileNumber);
     }
+    public void transactionHistory() {
+        Server.transactionHistory(this.mobileNumber);
+    }
 
     public void changeName(String name){
         Server.changeName(this.mobileNumber, name);
